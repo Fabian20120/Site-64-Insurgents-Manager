@@ -564,6 +564,41 @@ async def monitor(ctx):
             await msg.edit(embed=new_embed)
     except asyncio.CancelledError:
         pass  # z. B. bei manuellem Stop oder Bot-Neustart
+    
+@bot.slash_command(name="bot_change")
+async def bot_change(ctx: discord.ApplicationContext):
+    everyone_role = ctx.guild.default_role
+    embed = discord.Embed(
+    title="📢 Bot Transition Announcement",
+    description=(
+        "**Hey everyone!** 👋\n"
+        "We wanted to let you know that we're currently in the process of **switching over to our own custom bot** 🤖. "
+        "This is a big step for us, and while we're excited about the improvements it will bring, "
+        "we understand that it might cause some confusion along the way.\n\n"
+
+        "🔄 **Timeline:**\n"
+        "We aim to **fully complete the transition within the next 2–3 weeks**. "
+        "That said, please keep in mind that even after the switch, some systems may still be a bit rough around the edges "
+        "as we fine-tune everything.\n\n"
+
+        "❗ **What stays:**\n"
+        "The only bot we won’t be replacing is **Bloxlink** 🔗 — it's deeply integrated and not worth the trouble to swap out.\n\n"
+
+        "🔔 **Heads-up on pings:**\n"
+        "During the testing phase, you may receive the occasional unexpected **ping** 🔔. "
+        "We apologize in advance and will try to keep disruptions to a minimum.\n\n"
+
+        "🙏 **We appreciate your understanding and patience** as we work to improve the experience for everyone. "
+        "If you run into any issues or have feedback, feel free to reach out!\n\n"
+
+        "Thanks for sticking with us! 💙\n"
+        f"||{everyone_role.mention}||"
+    ),
+    color=discord.Color.from_rgb(255,0,0)
+)
+    embed.set_footer(text="Transitioning to our own custom bot")
+    embed.timestamp = datetime.datetime.now()
+    await ctx.send(embed=embed)
 
 import platform
 
