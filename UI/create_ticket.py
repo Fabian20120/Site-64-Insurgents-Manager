@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import ui, Interaction, PermissionOverwrite, Embed, Color
 from roles import UserRoles
 
-LOG_CHANNEL_ID = 1398847172463689728  # Passe die ID ggf. an
+LOG_CHANNEL_ID = 1398847172463689728
 
 class CreateTicket(ui.View):
     def __init__(self):

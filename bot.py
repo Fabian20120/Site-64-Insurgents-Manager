@@ -12,14 +12,13 @@ bot = commands.Bot(command_prefix='!')
 bot.persistent_views_added=False
 
 def parse_to_unix(date_str):
-    # Erwartetes Format: "24-18:30"
+    #24-18:30
     day, time_part = date_str.split('-')
     hour, minute = map(int, time_part.split(':'))
     now = datetime.datetime.now()
     try:
         target = datetime.datetime(year=now.year, month=now.month, day=int(day), hour=hour, minute=minute)
     except ValueError:
-        # Falls Tag im aktuellen Monat vorbei ist, nimm nächsten Monat
         next_month = now.month + 1 if now.month < 12 else 1
         year = now.year if now.month < 12 else now.year + 1
         target = datetime.datetime(year=year, month=next_month, day=int(day), hour=hour, minute=minute)
@@ -417,7 +416,7 @@ async def claim(ctx):
     # Optional: Prüfe, ob dies ein Ticket-Channel ist
     await ctx.respond(f"{ctx.author.mention} claimed the ticket.", ephemeral=False)
     # Logge das Claiming
-    log_channel = ctx.guild.get_channel(1240038929479110697)
+    log_channel = ctx.guild.get_channel(1398847172463689728)
     if log_channel:
         await log_channel.send(f"📌 **Ticket claimed:** {channel.mention} by {ctx.author.mention}")
 
@@ -434,11 +433,11 @@ async def close(ctx):
     import os
     from datetime import datetime
     os.makedirs("transcripts", exist_ok=True)
-    filename = f"transcripts/{channel.name}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.txt"
+    filename = f"transcripts/{channel.name}-{datetime.utcnow().strftime('%Y-%d.%m-%H-%M-%S')}.txt"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("\n".join(transcript_lines))
     # Log-Nachricht
-    log_channel = ctx.guild.get_channel(1240038929479110697)
+    log_channel = ctx.guild.get_channel(1398847172463689728)
     if log_channel:
         import discord
         file = discord.File(filename)
@@ -448,9 +447,7 @@ async def close(ctx):
         )
     await channel.delete()
 
-async def is_allowed(ctx):
-    # Beispiel: Nur Administratoren dürfen den Command nutzen
-    return ctx.author.guild_permissions.administrator
+
 
 with open("/home/fabian/secrets.json", "r") as f:
     data = json.load(f)
