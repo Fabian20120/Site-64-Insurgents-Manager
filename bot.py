@@ -2,10 +2,10 @@ import os
 import discord
 from discord.ext import commands
 from discord import Option, Member
+from UI import send_rules, CreateTicket, TrainingTypeView
 import json
 import datetime
 import time
-from UI import CreateTicket
 
 bot = commands.Bot(command_prefix='!')
 
@@ -137,78 +137,6 @@ async def RoleInformation(ctx: discord.ApplicationContext):
     )
     await ctx.send(embed=embed)
     await ctx.respond("Created!", ephemeral=True)
-
-class TrainingTypeSelect(discord.ui.Select):
-    def __init__(self):
-        options = [
-            discord.SelectOption(label="MTF"),
-            discord.SelectOption(label="RRT"),
-            discord.SelectOption(label="CD"),
-            discord.SelectOption(label="CI"),
-            discord.SelectOption(label="Med"),
-            discord.SelectOption(label="ScD"),
-            discord.SelectOption(label="ISD"),
-            discord.SelectOption(label="IA"),
-            discord.SelectOption(label="O5"),
-            discord.SelectOption(label="SiD"),
-        ]
-        super().__init__(
-            placeholder="Select training types...",
-            min_values=1,
-            max_values=len(options),
-            options=options
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        self.view.selected_types = self.values
-        await interaction.response.defer()
-
-class SendTrainingButton(discord.ui.Button):
-    def __init__(self):
-        super().__init__(label="Submit training", style=discord.ButtonStyle.green)
-
-    async def callback(self, interaction: discord.Interaction):
-        view = self.view
-        if interaction.user != view.author:
-            await interaction.response.send_message("Only the creator can use this UI.", ephemeral=True)
-            return
-        if not view.selected_types:
-            await interaction.response.send_message("Please select at least one training type.", ephemeral=True)
-            return
-
-        role_id = 1386851365460119623
-        role = view.ctx.guild.get_role(role_id)
-        host = view.author
-        unix_ts = parse_to_unix(f"{view.day}-{view.hr}:{view.minute}")
-        discord_time = f"<t:{unix_ts}:R>"
-        embed = discord.Embed(title="A new training has been created!", color=discord.Color.blue())
-        if role:
-            embed.add_field(name="", value=role.mention, inline=False)
-        else:
-            embed.add_field(name="", value="Role not found", inline=False)
-        embed.add_field(name="Host", value=host.mention, inline=False)
-        embed.add_field(name="Co-Host", value=view.co_host.mention, inline=False)
-        embed.add_field(name="Users Needed", value=view.users_needed, inline=False)
-        embed.add_field(name="Main objectives:", value=", ".join(view.selected_types), inline=False)
-        embed.add_field(name="Time of Training:", value=discord_time, inline=False)
-        embed.set_footer(text=f"Training created by {host.display_name}", icon_url=host.avatar.url)
-        embed.timestamp = datetime.datetime.now()
-        await view.ctx.channel.send(embed=embed)
-        await interaction.response.send_message("Training has been posted in the channel!", ephemeral=True)
-
-class TrainingTypeView(discord.ui.View):
-    def __init__(self, author, ctx, co_host, day, hr, minute, users_needed):
-        super().__init__(timeout=60)
-        self.selected_types = []
-        self.author = author
-        self.ctx = ctx
-        self.co_host = co_host
-        self.day = day
-        self.hr = hr
-        self.minute = minute
-        self.users_needed = users_needed
-        self.add_item(TrainingTypeSelect())
-        self.add_item(SendTrainingButton())
 
 @bot.slash_command(name="create_training", description="Create a training with UI selection")
 async def create_training_ui(
@@ -463,33 +391,6 @@ async def create_raid_ui(
         view=view,
         ephemeral=True
     )
-
-# Beispiel-Regeltext als Embed
-async def send_rules(channel):
-    embed = discord.Embed(
-        title="──────── RULES ────────",
-        description=(
-            "**1.** Follow Discord Terms of Service & Community Guidelines;\n"
-            "[DiscordTOS](https://discord.com/terms), [Discord Guidelines](https://discord.com/guidelines)\n"
-            "**2.** Be respectful to others.\n"
-            "**3.** Use bot commands only in <#1240431397752144024> only, exceptions apply to Beta Class+.\n"
-            "**4.** Vulgar (NSFW) language or images will not be tolerated.\n"
-            "**5.** No expression of graphic behaviour is tolerated.\n"
-            "**6.** No alt accounts, you are only allowed to have one account here.\n"
-            "**7.** Spamming/flooding the chat is prohibited; copy and pasted text (\"copypastas\") will be deleted also result in a punishment.\n"
-            "**8.** Make sure your name is possible to ping/mention (@); names like *neryo* will be renamed.\n"
-            "**9.** Exploiting, looking for shortcomings in rules will result in a punishment.\n"
-            "**10.** Do not annoy/troll anyone when they do not wish to be bothered."
-            "**11.** Do not discuss punishments such as warnings, mutes, and bans in any channels. It is a sore topic and creates a negative atmosphere. If you have a problem or would like to discuss the punishment with staff, please DM the staff of your choice.\n"
-            "**12.** No staff disrespect - Staff decisions are final, and disrespect will not be tolerated.\n"
-            "**13.** Any type of Self-Promotion is NOT allowed. This includes YouTube channels, Discord servers, Instagram profiles etc. (In and out of DMs)\n"
-            "**14.** This is an English Only Server, this means your are not allowed speaking other languages like Russian, or German.\n"
-            "**Note:** Before talking in channels, make sure to read the pins as they contain important information (including rules) specific to that channel. \n"
-
-        ),
-        color=discord.Color.red()
-    )
-    await channel.send(embed=embed)
     
 @bot.slash_command(name="start_raid", description="Create the start message after /create_raid")
 async def startRaid(ctx: discord.ApplicationContext, co_host: discord.Member, target: Option(str, "for exampel Breach 610"), game_link: str):
