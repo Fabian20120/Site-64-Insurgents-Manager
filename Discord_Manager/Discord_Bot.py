@@ -20,14 +20,13 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 bot.persistent_views_added=False
 
 def parse_to_unix(date_str):
-    # Erwartetes Format: "24-18:30"
+    #24-18:30
     day, time_part = date_str.split('-')
     hour, minute = map(int, time_part.split(':'))
     now = datetime.datetime.now()
     try:
         target = datetime.datetime(year=now.year, month=now.month, day=int(day), hour=hour, minute=minute)
     except ValueError:
-        # Falls Tag im aktuellen Monat vorbei ist, nimm nächsten Monat
         next_month = now.month + 1 if now.month < 12 else 1
         year = now.year if now.month < 12 else now.year + 1
         target = datetime.datetime(year=year, month=next_month, day=int(day), hour=hour, minute=minute)
