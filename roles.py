@@ -16,7 +16,6 @@ class UserRoles:
     Mercenary               = 1386867420446199818
     Enlisted                = 1240030362546212945
     Not_Enlisted            = 1387098968781226064
-    Programmer              = 1387441958120853504
     Administrator           = 1240029949943873556
     Senior_Moderator        = 1248304626231541850
     Moderator               = 1240030064700162120

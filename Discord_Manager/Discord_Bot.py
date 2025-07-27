@@ -2,12 +2,20 @@ import os
 import discord
 from discord.ext import commands
 from discord import Option, Member
+from Backend.Embeds_UIs import WelcomeEmbed, WelcomeView
+import Backend
+from Managers.Platform_Manager import create_embed, get_stats
 from UI import send_rules, CreateTicket, TrainingTypeView
+from roles import UserRoles
 import json
 import datetime
 import time
+import asyncio
 
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 bot.persistent_views_added=False
 
@@ -26,15 +34,23 @@ def parse_to_unix(date_str):
     return int(target.timestamp())
 
 @bot.event
+async def on_member_join(member: discord.Member):
+    welcome_channel = bot.get_channel(1240029491473158276)
+    if welcome_channel is None:
+        welcome_channel = await member.guild.fetch_channel(1240029491473158276)
+
+    embed = WelcomeEmbed(member)
+    view = WelcomeView()
+    await welcome_channel.send(embed=embed, view=view)
+
+
+@bot.event
 async def on_ready():
-    if not bot.persistent_views_added:
-        bot.add_view(CreateTicket())
-        bot.persistent_views_added=True
+    if not hasattr(bot, "persistent_views_added") or not bot.persistent_views_added:
+        bot.add_view(WelcomeView())  # registriere persistent view fürs UI (Buttons)
+        bot.persistent_views_added = True
     print(f'Logged in as {bot.user.name} - {bot.user.id}')
-    print(f"Bot is ready!")
-    
-import discord
-from discord.ext import commands
+    print("Bot is ready!")
 
 @bot.slash_command(name="role_information")
 async def RoleInformation(ctx: discord.ApplicationContext):
@@ -417,7 +433,7 @@ async def claim(ctx):
     # Optional: Prüfe, ob dies ein Ticket-Channel ist
     await ctx.respond(f"{ctx.author.mention} claimed the ticket.", ephemeral=False)
     # Logge das Claiming
-    log_channel = ctx.guild.get_channel(1240038929479110697)
+    log_channel = ctx.guild.get_channel(1398847172463689728)
     if log_channel:
         await log_channel.send(f"📌 **Ticket claimed:** {channel.mention} by {ctx.author.mention}")
 
@@ -428,34 +444,37 @@ async def close(ctx):
     # Transcript generieren
     messages = [msg async for msg in channel.history(limit=None, oldest_first=True)]
     transcript_lines = [
-        f"[{msg.created_at.strftime('%Y-%m-%d %H:%M:%S')}] {msg.author}: {msg.content}"
+        f"[{msg.created_at.strftime('%Y-%m-%d %H:%M:%S')}] {msg.author.id}: {msg.content}"
         for msg in messages
     ]
     import os
     from datetime import datetime
     os.makedirs("transcripts", exist_ok=True)
-    filename = f"transcripts/{channel.name}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.txt"
+    filename = f"transcripts/{channel.name}-{datetime.utcnow().strftime('%Y-%d.%m-%H-%M-%S')}.txt"
+    filename_id = f"{channel.name}-{datetime.utcnow().strftime('%Y-%d.%m-%H-%M-%S')}"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("\n".join(transcript_lines))
     # Log-Nachricht
-    log_channel = ctx.guild.get_channel(1240038929479110697)
+    log_channel = ctx.guild.get_channel(1398847172463689728)
     if log_channel:
         import discord
         file = discord.File(filename)
         await log_channel.send(
-            content=f"📁 **Ticket closed** {channel.name} by {ctx.author.mention}",
+            content=f"📁 **Ticket closed** {channel.name} by {ctx.author.mention}\n Recreate this Ticket with /load_ticket the Id is:\n ``{filename_id}``",
             file=file
         )
     await channel.delete()
     
 @bot.slash_command(name="load_ticket", description="Load a ticket from a transcript file")
-async def load_ticket(ctx: discord.ApplicationContext, file: discord.Attachment):
-    if not file.filename.endswith(".txt"):
-        await ctx.respond("Please upload a valid transcript file (.txt).", ephemeral=True)
+async def load_ticket(ctx: discord.ApplicationContext, id: discord.Option(str, "Example: ticket-fabian2_011-2025-27.07-02-26-18", required=True)):
+    if not os.path.exists("transcripts/" + id+".txt"):
+        await ctx.respond("Please enter a valid transcript. (Error: 404 File not found)", ephemeral=True)
         return
-    # Download the file
-    transcript_content = await file.read()
-    transcript_lines = transcript_content.decode("utf-8").splitlines()
+    with open("transcripts/" + id+".txt", "r") as f:
+        transcript_content = f.read()
+    if not transcript_content:
+        await ctx.respond("The transcript file is empty or does not exist.", ephemeral=True)
+        return
     
     # Create a new ticket channel
     overwrites = {
@@ -463,18 +482,98 @@ async def load_ticket(ctx: discord.ApplicationContext, file: discord.Attachment)
         ctx.author: discord.PermissionOverwrite(view_channel=True, send_messages=True)
     }
     ticket_channel = await ctx.guild.create_text_channel(
-        name=f"ticket-{ctx.author.name}",
+        name=f"transcript-{ctx.author.name}",
         overwrites=overwrites,
         reason="Ticket created from transcript"
     )
-    
-    # Send the transcript in the new channel
-    for line in transcript_lines:
-        await ticket_channel.send(line)
-    
-    await ctx.respond(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
 
-with open("/home/fabian/secrets.json", "r") as f:
+    msg = await ctx.respond(f"The ticket is being recreated in {ticket_channel.mention}...")
+
+    import re
+
+    pattern = re.compile(r"^\[(?P<timestamp>[^\]]+)\]\s+(?P<userid>\d+):\s*(?P<content>.*)")
+
+    messages = []
+    current_msg = None
+
+    for line in transcript_content.splitlines():
+        if not line.strip():
+            # Leere Zeile: zum aktuellen content hinzufügen, wenn vorhanden
+            if current_msg:
+                current_msg['content'] += '\n'
+            continue
+
+        match = pattern.match(line)
+        if match:
+            # Neue Nachricht beginnt, vorherige speichern
+            if current_msg:
+                messages.append(current_msg)
+
+            current_msg = {
+                "timestamp": match.group("timestamp"),
+                "userid": int(match.group("userid")),
+                "content": match.group("content").rstrip()  # Inhalt der ersten Zeile
+            }
+        else:
+            # Zeile gehört zum content der letzten Nachricht (mehrzeilig)
+            if current_msg:
+                current_msg['content'] += '\n' + line.rstrip()
+            else:
+                # Wenn keine aktuelle Nachricht (z.B. am Anfang), ignorieren oder loggen
+                print(f"⚠️ Zeile ohne Header und ohne aktuelle Nachricht: {line}")
+
+    # Letzte Nachricht hinzufügen
+    if current_msg:
+        messages.append(current_msg)
+
+
+    # Jetzt Nachrichten senden
+    for msg in messages:
+        user = discord.utils.get(ctx.guild.members, id=msg["userid"])
+        user_mention = user.mention if user else f"<@{msg['userid']}>"
+        await ticket_channel.send(f"[{msg['timestamp']}] {user_mention}:")
+        if msg["content"].strip():
+            await ticket_channel.send(msg["content"].strip())
+
+
+    await msg.edit_original_response(
+        content=f"✅ Ticket successfully recreated!\n{ticket_channel.mention}"
+    )
+
+from Managers.Data_Manager import Set_Variable_By_UserId, Get_Variable_By_UserId
+
+@bot.slash_command(name="set_user_variable")
+async def set_user_variable(ctx: discord.ApplicationContext, user:Member, variable:str, value:str):
+    await ctx.defer()
+    Set_Variable_By_UserId(variable, value, str(user.id))
+    await ctx.respond(f"{variable} of {user.mention} were set to {value}.")
+    
+@bot.slash_command(name="pts-balance")
+async def pts_balance(ctx: discord.ApplicationContext):
+    await ctx.defer()
+    pts = Get_Variable_By_UserId("pts", ctx.author.id)
+    await ctx.respond(embed=Backend.Embeds_UIs.PointBalanceEmbed(pts, ctx.author))
+    
+@bot.slash_command(name="monitor", description="Live system monitor")
+async def monitor(ctx):
+    msg = await ctx.send(embed=create_embed())
+
+    try:
+        while True:
+            await asyncio.sleep(2)
+            new_embed = create_embed()
+            await msg.edit(embed=new_embed)
+    except asyncio.CancelledError:
+        pass  # z. B. bei manuellem Stop oder Bot-Neustart
+
+import platform
+
+if platform.system() == "Windows":
+    secrets_path = "C:\\Users\\User\\Desktop\\home\\fabian\\secrets.json"
+else:
+    secrets_path = "/home/fabian/secrets.json"
+
+with open(secrets_path, "r") as f:
     data = json.load(f)
     BOT_TOKEN = data["BOT_TOKEN"]
 
