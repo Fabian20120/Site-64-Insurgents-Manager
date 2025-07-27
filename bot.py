@@ -447,10 +447,32 @@ async def close(ctx):
             file=file
         )
     await channel.delete()
-
-async def is_allowed(ctx):
-    # Beispiel: Nur Administratoren dürfen den Command nutzen
-    return ctx.author.guild_permissions.administrator
+    
+@bot.slash_command(name="load_ticket", description="Load a ticket from a transcript file")
+async def load_ticket(ctx: discord.ApplicationContext, file: discord.Attachment):
+    if not file.filename.endswith(".txt"):
+        await ctx.respond("Please upload a valid transcript file (.txt).", ephemeral=True)
+        return
+    # Download the file
+    transcript_content = await file.read()
+    transcript_lines = transcript_content.decode("utf-8").splitlines()
+    
+    # Create a new ticket channel
+    overwrites = {
+        ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False),
+        ctx.author: discord.PermissionOverwrite(view_channel=True, send_messages=True)
+    }
+    ticket_channel = await ctx.guild.create_text_channel(
+        name=f"ticket-{ctx.author.name}",
+        overwrites=overwrites,
+        reason="Ticket created from transcript"
+    )
+    
+    # Send the transcript in the new channel
+    for line in transcript_lines:
+        await ticket_channel.send(line)
+    
+    await ctx.respond(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
 
 with open("/home/fabian/secrets.json", "r") as f:
     data = json.load(f)
