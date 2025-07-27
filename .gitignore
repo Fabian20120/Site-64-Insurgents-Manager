@@ -1,3 +1,5 @@
+__pycache__
+transcripts
 .venv
 .venv-1/pyvenv.cfg
 .venv-1/Lib/site-packages/distutils-precedence.pth
@@ -1934,3 +1936,6 @@
 .venv-1/Scripts/pip3.exe
 .venv-1/Scripts/python.exe
 .venv-1/Scripts/pythonw.exe
+__pycache__/roles.cpython-311.pyc
+__pycache__/roles.cpython-311.pyc
+__pycache__/roles.cpython-311.pyc
