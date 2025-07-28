@@ -4,6 +4,7 @@ from discord.ext import commands, tasks
 from discord import Option, Member, ApplicationContext
 from Backend.Embeds_UIs import WelcomeEmbed, WelcomeView
 import Backend
+import pytz
 from Backend.Embeds_UIs.CreateAnnouncmentView import AnnouncementStep1
 from Managers.Platform_Manager import create_embed, get_stats
 from UI import send_rules, CreateTicket, TrainingTypeView
@@ -807,6 +808,66 @@ async def change_status(
     elif new_status == 3:
         await bot.change_presence(status=discord.Status.dnd, activity=None)
     await ctx.respond(f"Status changed to {get_status_emoji()}.", ephemeral=True)
+    
+@bot.slash_command(name="convert_to_cet", description="Convert time from any timezone or country to Central European Time (CET/MET)")
+async def convert_to_cet(
+    ctx,
+    input_time: Option(str, "Time in format YYYY-MM-DD HH:MM"),
+    timezone_name: Option(str, "Timezone (e.g. Asia/Tokyo)", required=False),
+    country: Option(str, "Country (e.g. Germany, Japan, USA)", required=False)
+):
+    source_tz = None
+
+    # Use timezone if specified
+    if timezone_name:
+        try:
+            source_tz = pytz.timezone(timezone_name)
+        except pytz.UnknownTimeZoneError:
+            await ctx.respond(f"❌ Unknown timezone: `{timezone_name}`", ephemeral=True)
+            return
+
+    # Else try to get timezone by country
+    elif country:
+        try:
+            country_data = pycountry.countries.search_fuzzy(country)[0]
+            country_code = country_data.alpha_2
+            tz_list = pytz.country_timezones.get(country_code)
+            if not tz_list:
+                await ctx.respond(f"❌ No timezones found for country `{country}`", ephemeral=True)
+                return
+            source_tz = pytz.timezone(tz_list[0])  # Use first timezone found
+        except (LookupError, IndexError):
+            await ctx.respond(f"❌ Unknown country: `{country}`", ephemeral=True)
+            return
+    else:
+        await ctx.respond("❌ Please provide either a timezone or a country.", ephemeral=True)
+        return
+
+    # Parse the input time
+    try:
+        naive_dt = datetime.datetime.strptime(input_time, "%Y-%m-%d %H:%M")
+    except ValueError:
+        await ctx.respond("❌ Invalid time format. Please use `YYYY-MM-DD HH:MM`.", ephemeral=True)
+        return
+
+    # Convert to aware datetime
+    source_dt = source_tz.localize(naive_dt)
+    cet_tz = pytz.timezone("Europe/Berlin")  # MET/CET
+    cet_dt = source_dt.astimezone(cet_tz)
+
+    embed = discord.Embed(
+        title="🕒 Time Conversion",
+        description=(
+            f"**Input Time:** `{input_time}`\n"
+            f"**Source Timezone:** `{source_dt.strftime('%Y-%m-%d %H:%M %Z')}`\n"
+            f"**Converted to CET:** `{cet_dt.strftime('%Y-%m-%d %H:%M %Z')}`"
+        ),
+        color=discord.Color.green(),
+        timestamp=datetime.datetime.now(datetime.timezone.utc)
+    )
+    embed.set_footer(text="Daylight Saving Time is automatically considered.")
+
+    await ctx.respond(embed=embed, ephemeral=True)
     
 import platform
 
