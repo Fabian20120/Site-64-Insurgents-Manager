@@ -1,0 +1,84 @@
+{
+    "37ab7594-c9b8-4ba4-ad21-d571ac2c78e4": {
+        "alias": "pts",
+        "icon": null,
+        "system_name": "Point System",
+        "point_system": "custom",
+        "allow_balance_checking": true,
+        "allow_trading": false,
+        "public_leaderboard": true,
+        "shop": {
+            "bff2611a-3f62-4a7e-bdec-541ed2c72fca": {
+                "name": "VIP - 1 Week",
+                "description": "Get VIP for 1 week!",
+                "price": 100,
+                "purchase_action": {
+                    "give_timed_role": ["168-1234567890"] 
+                }
+            },
+            "71e85a13-04e4-45f0-9014-add1204043e0": {
+                "name": "Cola",
+                "description": "Get a virtual and useless Cola!",
+                "price": 1,
+                "purchase_action": {
+                    "give_item": ["1*3130ea3e-1c37-5aad-af68-90d56141fcba"]
+                }
+            }
+        },
+        "milestones": {
+            "8ddc5f31-ecc0-4f21-8506-433da86fc509": {
+                "name": "10 Points",
+                "points_required": 10,
+                "reset_points": false,
+                "actions": {
+                    "give_badge": ["d229b3d4-5521-43e1-943d-5c6720188bc3"]
+                }
+            },
+            "2a6c8557-a764-4df9-b22e-080657816eaa": {
+                "name": "1.000",
+                "points_required": 1000,
+                "reset_points": false,
+                "actions": [
+                    {
+                        "type": "give_badge",
+                        "uuids": ["89b048e5-16fb-4ea4-b1eb-39f4879188a4"]
+                    }
+                ]
+                    "give_badge": ["89b048e5-16fb-4ea4-b1eb-39f4879188a4"]
+                }
+            },
+            "0e756fa2-e929-45a2-b940-aa29645dd2fa": {
+                "name": "1 Rebirth",
+                "points_required": 1000000,
+                "actions": [
+                    {
+                        "type": "give_badge",
+                        "uuids": ["3d0eff92-7abf-4dc1-a4f8-58022c16d754"]
+                    },
+                    {
+                        "type": "give_role",
+                        "uuids": ["511f4c5e-e4fa-400e-bcaf-4e2091faef28"]
+                    },
+                    {
+                        "type": "remove_badge",
+                        "uuids": ["d229b3d4-5521-43e1-943d-5c6720188bc3", "89b048e5-16fb-4ea4-b1eb-39f4879188a4"]
+                    }
+                ]
+            }
+        },
+        "sources": {
+            "9f2ab474-8f03-4081-99d5-4fed54300b89": {
+                "name": "Messages Wage",
+                "source_type": {
+                    "messages_send": {
+                        "messages_required": 10,
+                        "messages_cooldown": 5,
+                        "points_to_award": 1,
+                        "points_cooldown": 0
+                        
+                    }
+                }
+            }
+        }
+    }
+}

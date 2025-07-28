@@ -1,7 +1,7 @@
 import os
 import discord
-from discord.ext import commands
-from discord import Option, Member
+from discord.ext import commands, tasks
+from discord import Option, Member, ApplicationContext
 from Backend.Embeds_UIs import WelcomeEmbed, WelcomeView
 import Backend
 from Backend.Embeds_UIs.CreateAnnouncmentView import AnnouncementStep1
@@ -12,6 +12,10 @@ import json
 import datetime
 import time
 import asyncio
+
+status = 2
+
+detailed_status = "Controlled Instability — System operating under active protocol updates and adjustments, executing live patch deployment with continuous diagnostics monitoring."
 
 intents = discord.Intents.default()
 intents.members = True
@@ -51,6 +55,8 @@ async def on_ready():
         bot.persistent_views_added = True
     print(f'Logged in as {bot.user.name} - {bot.user.id}')
     print("Bot is ready!")
+    await bot.change_presence(status=discord.Status.idle, activity=None)
+    await load_status_message()
 
 @bot.slash_command(name="role_information")
 async def RoleInformation(ctx: discord.ApplicationContext):
@@ -576,12 +582,12 @@ async def slash_pts_balance(ctx: discord.ApplicationContext):
     
 @bot.slash_command(name="monitor", description="Live system monitor", dm_permission=True)
 async def monitor(ctx):
-    msg = await ctx.send(embed=create_embed())
+    msg = await ctx.send(embed=create_embed(status))
 
     try:
         while True:
             await asyncio.sleep(2)
-            new_embed = create_embed()
+            new_embed = create_embed(status)
             await msg.edit(embed=new_embed)
     except asyncio.CancelledError:
         pass  # z. B. bei manuellem Stop oder Bot-Neustart
@@ -672,7 +678,136 @@ async def bot_change(ctx: discord.ApplicationContext):
     embed.set_footer(text="Transitioning to our own custom bot")
     embed.timestamp = datetime.datetime.now()
     await ctx.send(embed=embed)
+    
+MESSAGE_STORE = "status_message.json"
 
+status_message = None
+
+async def load_status_message():
+    global status_message
+    try:
+        with open(MESSAGE_STORE, "r") as f:
+            data = json.load(f)
+        channel = bot.get_channel(data["channel_id"])
+        if channel:
+            status_message = await channel.fetch_message(data["message_id"])
+            print("Status message loaded successfully.")
+    except Exception as e:
+        print(f"Could not load status message: {e}")
+
+async def save_status_message(message):
+    data = {
+        "channel_id": message.channel.id,
+        "message_id": message.id
+    }
+    with open(MESSAGE_STORE, "w") as f:
+        json.dump(data, f)
+    print("Status message saved.")
+
+def get_status_emoji():
+    if status == 1:
+        return "🟢"
+    elif status == 2:
+        return "🟡"
+    elif status == 3:
+        return "🔴"
+    return "❔"
+
+def create_embed():
+    embed = discord.Embed(
+    title=f"Site 64 Insurgents Manager's Status: {get_status_emoji()}",
+    description=detailed_status,
+    timestamp=datetime.datetime.now(datetime.timezone.utc),
+    color=discord.Color.from_rgb(255, 0, 0)
+    )
+    embed.set_footer(text="Last Update")
+    return embed
+    
+def create_name():
+    return f"{get_status_emoji()}│status"
+
+@bot.slash_command(name="status")
+async def status_cmd(ctx):
+    global status_message
+    await ctx.defer()
+
+    if status_message is None:
+        # Nachricht zum ersten Mal senden
+        embed = create_embed()
+        status_message = await ctx.send(embed=embed)
+        await save_status_message(status_message)
+    else:
+        # Nachricht updaten
+        embed = create_embed()
+        await status_message.edit(embed=embed)
+
+    await ctx.respond("Status updated successfully.", ephemeral=True)
+
+# Beispiel: periodisches Update (alle 60 Sekunden)
+last_status = None
+
+@tasks.loop(seconds=30)
+async def periodic_status_update():
+    if status_message:
+        global last_status
+        if last_status != status and last_status != None:
+            try:
+                await status_message.create_thread(
+                    name=f"discussion_{datetime.date.today()}",
+                    auto_archive_duration=4320
+                )
+            except Exception as e:
+                pass
+        await status_message.channel.edit(name=create_name())
+        embed = create_embed()
+        await status_message.edit(embed=embed)
+        last_status = status
+
+@periodic_status_update.before_loop
+async def before_loop():
+    await bot.wait_until_ready()
+
+periodic_status_update.start()
+
+STATUS_FILE = "status.json"
+
+def load_status():
+    if os.path.exists(STATUS_FILE):
+        with open(STATUS_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("status", 1)  # Default: 1 (Online)
+    return 1
+
+status = load_status()
+
+def save_status(status_value: int):
+    with open(STATUS_FILE, "w") as f:
+        json.dump({"status": status_value}, f)
+
+@bot.slash_command(name="change_status")
+async def change_status(
+    ctx,
+    new_status: discord.Option(
+        int,
+        "New status (1: Online, 2: Controlled Instability, 3: Lockdown Mode)",
+        choices=[
+            discord.OptionChoice(name="Online", value=1),
+            discord.OptionChoice(name="Controlled Instability", value=2),
+            discord.OptionChoice(name="Lockdown Mode", value=3)
+        ]
+    ) # type: ignore
+):
+    global status
+    status = new_status
+    save_status(status)
+    if new_status == 1:
+        await bot.change_presence(status=discord.Status.online, activity=None)
+    elif new_status == 2:
+        await bot.change_presence(status=discord.Status.idle, activity=None)
+    elif new_status == 3:
+        await bot.change_presence(status=discord.Status.dnd, activity=None)
+    await ctx.respond(f"Status changed to {get_status_emoji()}.", ephemeral=True)
+    
 import platform
 
 if platform.system() == "Windows":
