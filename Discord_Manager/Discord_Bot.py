@@ -10,6 +10,7 @@ from Managers.Platform_Manager import create_embed, get_stats
 from UI import send_rules, CreateTicket, TrainingTypeView
 from roles import UserRoles
 import json
+import pycountry
 import datetime
 import time
 import asyncio
@@ -808,17 +809,41 @@ async def change_status(
     elif new_status == 3:
         await bot.change_presence(status=discord.Status.dnd, activity=None)
     await ctx.respond(f"Status changed to {get_status_emoji()}.", ephemeral=True)
-    
-@bot.slash_command(name="convert_to_cet", description="Convert time from any timezone or country to Central European Time (CET/MET)")
+
+def load_country_mapping(file_path="all_country_names_multilang.txt"):
+    mapping = {}
+    with open(file_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line: continue
+            parts = line.split(":")
+            if len(parts) != 2:
+                continue
+            alpha_2, translations = parts
+            entries = translations.strip().split(" ")
+            for entry in entries:
+                try:
+                    lang_code, name = entry.split("=", 1)
+                    lang_code = lang_code.strip()
+                    name = name.strip().strip("'").lower()
+                    mapping[name] = alpha_2.upper()
+                except:
+                    continue
+    return mapping
+
+# Load at startup
+country_name_to_code = load_country_mapping()
+
+@bot.slash_command(name="convert_to_cet", description="Convert time from any country or timezone to Central European Time (CET)")
 async def convert_to_cet(
     ctx,
     input_time: Option(str, "Time in format YYYY-MM-DD HH:MM"),
     timezone_name: Option(str, "Timezone (e.g. Asia/Tokyo)", required=False),
-    country: Option(str, "Country (e.g. Germany, Japan, USA)", required=False)
+    country: Option(str, "Country (in English or native name)", required=False)
 ):
     source_tz = None
 
-    # Use timezone if specified
+    # Timezone name has priority
     if timezone_name:
         try:
             source_tz = pytz.timezone(timezone_name)
@@ -826,48 +851,46 @@ async def convert_to_cet(
             await ctx.respond(f"❌ Unknown timezone: `{timezone_name}`", ephemeral=True)
             return
 
-    # Else try to get timezone by country
+    # Country fallback
     elif country:
-        try:
-            country_data = pycountry.countries.search_fuzzy(country)[0]
-            country_code = country_data.alpha_2
-            tz_list = pytz.country_timezones.get(country_code)
-            if not tz_list:
-                await ctx.respond(f"❌ No timezones found for country `{country}`", ephemeral=True)
-                return
-            source_tz = pytz.timezone(tz_list[0])  # Use first timezone found
-        except (LookupError, IndexError):
-            await ctx.respond(f"❌ Unknown country: `{country}`", ephemeral=True)
+        country_key = country.lower().strip()
+        alpha_2 = country_name_to_code.get(country_key)
+        if not alpha_2:
+            await ctx.respond(f"❌ Country not recognized: `{country}`", ephemeral=True)
             return
+        tz_list = pytz.country_timezones.get(alpha_2)
+        if not tz_list:
+            await ctx.respond(f"❌ No timezones found for country: `{country}`", ephemeral=True)
+            return
+        source_tz = pytz.timezone(tz_list[0])
+
     else:
         await ctx.respond("❌ Please provide either a timezone or a country.", ephemeral=True)
         return
 
-    # Parse the input time
+    # Parse time
     try:
         naive_dt = datetime.datetime.strptime(input_time, "%Y-%m-%d %H:%M")
     except ValueError:
-        await ctx.respond("❌ Invalid time format. Please use `YYYY-MM-DD HH:MM`.", ephemeral=True)
+        await ctx.respond("❌ Invalid time format. Use `YYYY-MM-DD HH:MM`.", ephemeral=True)
         return
 
-    # Convert to aware datetime
-    source_dt = source_tz.localize(naive_dt)
-    cet_tz = pytz.timezone("Europe/Berlin")  # MET/CET
-    cet_dt = source_dt.astimezone(cet_tz)
+    # Convert
+    localized_dt = source_tz.localize(naive_dt)
+    cet = pytz.timezone("Europe/Berlin")
+    cet_dt = localized_dt.astimezone(cet)
 
     embed = discord.Embed(
         title="🕒 Time Conversion",
         description=(
-            f"**Input Time:** `{input_time}`\n"
-            f"**Source Timezone:** `{source_dt.strftime('%Y-%m-%d %H:%M %Z')}`\n"
+            f"**Original:** `{localized_dt.strftime('%Y-%m-%d %H:%M %Z')}`\n"
             f"**Converted to CET:** `{cet_dt.strftime('%Y-%m-%d %H:%M %Z')}`"
         ),
         color=discord.Color.green(),
         timestamp=datetime.datetime.now(datetime.timezone.utc)
     )
-    embed.set_footer(text="Daylight Saving Time is automatically considered.")
-
-    await ctx.respond(embed=embed, ephemeral=True)
+    embed.set_footer(text="Includes daylight saving time (if active)")
+    await ctx.respond(embed=embed)
     
 import platform
 
