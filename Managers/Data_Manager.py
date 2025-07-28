@@ -20,6 +20,8 @@ def Get_Variable_By_UserId(Variable, UserId):
             return Economy[Variable]
         else:
             return None
+    except Exception as e:
+        pass
 
 def Get_Economy_By_UserId(UserId):
     path = str(Get_Full_Path(f"Backend\Economy/{UserId}.json"))
