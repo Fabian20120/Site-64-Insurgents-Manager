@@ -22,6 +22,7 @@ class CreateTicket(ui.View):
             discord.SelectOption(label="Bug report", description="You want to report a bug or issue with the server or SSRP."),
             discord.SelectOption(label="Appeal", description="You want to appeal a punishment or ban."),
             discord.SelectOption(label="Points", description="You want to receive points for a specific reason."),
+            discord.SelectOption(label="Bot error", description="You got an error while using our bot."),
             discord.SelectOption(label="Other", description="You have another reason to create a ticket.")
         ]
     )
