@@ -4,6 +4,7 @@ from discord.ext import commands
 from discord import Option, Member
 from Backend.Embeds_UIs import WelcomeEmbed, WelcomeView
 import Backend
+from Backend.Embeds_UIs.CreateAnnouncmentView import AnnouncementStep1
 from Managers.Platform_Manager import create_embed, get_stats
 from UI import send_rules, CreateTicket, TrainingTypeView
 from roles import UserRoles
@@ -15,7 +16,7 @@ import asyncio
 intents = discord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='!', intents=intents, dm_command=True)
 
 bot.persistent_views_added=False
 
@@ -547,13 +548,33 @@ async def set_user_variable(ctx: discord.ApplicationContext, user:Member, variab
     Set_Variable_By_UserId(variable, value, str(user.id))
     await ctx.respond(f"{variable} of {user.mention} were set to {value}.")
     
-@bot.slash_command(name="pts-balance")
-async def pts_balance(ctx: discord.ApplicationContext):
+@bot.slash_command(name="get_user_variable")
+async def get_user_variable(ctx: discord.ApplicationContext, user:Member, variable:str):
+    await ctx.defer()
+    value = Get_Variable_By_UserId(variable, str(user.id))
+    if value is None:
+        await ctx.respond(f"{variable} of {user.mention} is empty", ephemeral=True)
+    else:
+        await ctx.respond(f"{variable} of {user.mention} is: {value}", ephemeral=True)
+        
+@bot.slash_command(name="add_user_variable")
+async def add_user_variable(ctx: discord.ApplicationContext, user:Member, variable:str, add:int):
+    await ctx.defer()
+    value = Get_Variable_By_UserId(variable, str(user.id))
+    if value is None:
+        Set_Variable_By_UserId(variable, add, user.id)
+        await ctx.respond(f"Added {add} to {variable} of {user.mention}. (New Total: {add} )")
+    else:
+        Set_Variable_By_UserId(variable, (int(value) + add), user.id)
+        await ctx.respond(f"Added {add} to {variable} of {user.mention}. (New Total: {int(value)+add} )")
+        
+@bot.slash_command(name="pts-balance", description="Zeigt deinen Punktestand", dm_permission=True)
+async def slash_pts_balance(ctx: discord.ApplicationContext):
     await ctx.defer()
     pts = Get_Variable_By_UserId("pts", ctx.author.id)
     await ctx.respond(embed=Backend.Embeds_UIs.PointBalanceEmbed(pts, ctx.author))
     
-@bot.slash_command(name="monitor", description="Live system monitor")
+@bot.slash_command(name="monitor", description="Live system monitor", dm_permission=True)
 async def monitor(ctx):
     msg = await ctx.send(embed=create_embed())
 
@@ -564,6 +585,93 @@ async def monitor(ctx):
             await msg.edit(embed=new_embed)
     except asyncio.CancelledError:
         pass  # z. B. bei manuellem Stop oder Bot-Neustart
+
+bot.embed_data = {}
+
+@bot.slash_command(name="get_member_mention", dm_permission=True)
+async def get_member_mention(ctx: discord.ApplicationContext, member:Member):
+    ctx.respond(f"Mention him/her with ``{member.mention}`` in Announcements.", ephemeral=True)
+
+@bot.slash_command(name="select_announcement_channel", description="Set the target channel for your announcement.")
+async def select_announcement_channel(ctx: discord.ApplicationContext, channel: discord.TextChannel):
+    bot.embed_data[ctx.user.id] = {"target_channel_id": channel.id}
+    await ctx.respond(f"✅ Target channel set to {channel.mention}.", ephemeral=True)
+
+
+@bot.slash_command(name="create_announcement", description="Start the announcement creation process.")
+async def create_announcement(ctx: discord.ApplicationContext):
+    # Wenn der Command im Server verwendet wird → DM starten
+    if ctx.channel.type != discord.ChannelType.private:
+        try:
+            await ctx.user.send(
+                "👋 Let's start creating your announcement!\n\n"
+                "You'll be guided step-by-step.\n"
+                "1. Use ``/select_announcement_channel`` in th target channel.\n"
+                "2. Come back and use ``/create_announcement`` then you will recive further steps."
+            )
+            await ctx.respond("📬 I've sent you a DM to continue the process.", ephemeral=True)
+        except discord.Forbidden:
+            await ctx.respond("❌ I can't send you a DM. Please enable DMs in your privacy settings.", ephemeral=True)
+        return
+
+    # In DMs: prüfen ob Channel gesetzt ist
+    user_data = bot.embed_data.get(ctx.user.id)
+    if not user_data or "target_channel_id" not in user_data:
+        await ctx.respond("❌ You haven't selected a target channel yet. Use `/select_announcement_channel` in a server channel first.", ephemeral=True)
+        return
+
+    # Starte die UI (z. B. erste Modal/View)
+    await ctx.send("📌 Let's configure your announcement.")
+    await ctx.send_modal(AnnouncementStep1(bot))
+
+        
+@bot.slash_command(name="announcement_demo", description="Create an announcement for the server")
+async def announcement_demo(ctx: discord.ApplicationContext):
+    embed = discord.Embed(
+        title="This is a Titel. Must be 256 characters or fewer.",
+        description=(
+            "This is a Description. Must be 4096 characters or fewer.\n\n"
+        ),
+        color=discord.Color.blue()
+    )
+    embed.set_footer(text="This is a footer. Must be 2048 characters or fewer.")
+    embed.timestamp = datetime.datetime.now()
+    await ctx.respond(embed=embed, ephemeral=True)
+    
+@bot.slash_command(name="bot_change")
+async def bot_change(ctx: discord.ApplicationContext):
+    everyone_role = ctx.guild.default_role
+    embed = discord.Embed(
+    title="📢 Bot Transition Announcement",
+    description=(
+        "**Hey everyone!** 👋\n"
+        "We wanted to let you know that we're currently in the process of **switching over to our own custom bot** 🤖. "
+        "This is a big step for us, and while we're excited about the improvements it will bring, "
+        "we understand that it might cause some confusion along the way.\n\n"
+
+        "🔄 **Timeline:**\n"
+        "We aim to **fully complete the transition within the next 2–3 weeks**. "
+        "That said, please keep in mind that even after the switch, some systems may still be a bit rough around the edges "
+        "as we fine-tune everything.\n\n"
+
+        "❗ **What stays:**\n"
+        "The only bot we won’t be replacing is **Bloxlink** 🔗 — it's deeply integrated and not worth the trouble to swap out.\n\n"
+
+        "🔔 **Heads-up on pings:**\n"
+        "During the testing phase, you may receive the occasional unexpected **ping** 🔔. "
+        "We apologize in advance and will try to keep disruptions to a minimum.\n\n"
+
+        "🙏 **We appreciate your understanding and patience** as we work to improve the experience for everyone. "
+        "If you run into any issues or have feedback, feel free to reach out!\n\n"
+
+        "Thanks for sticking with us! 💙\n"
+        f"||{everyone_role.mention}||"
+    ),
+    color=discord.Color.from_rgb(255,0,0)
+)
+    embed.set_footer(text="Transitioning to our own custom bot")
+    embed.timestamp = datetime.datetime.now()
+    await ctx.send(embed=embed)
 
 import platform
 
