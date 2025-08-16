@@ -913,21 +913,21 @@ class Enlist_Embed(discord.Embed):
 class Enlist_Modal(discord.ui.Modal):
     def __init__(self):
         super().__init__(title="Enlistment Form")
-        self.add_item(discord.ui.InputText(
+        self.add_item(discord.ui.TextInput(
             label="Why do you want to join?",
             placeholder="Why do you want to join Site 64 Insurgents? What interests you?",
             min_length=10,
             max_length=500,
             required=True
         ))
-        self.add_item(discord.ui.InputText(
+        self.add_item(discord.ui.TextInput(
             label="CI Gamepass",
             placeholder="Do you have the CI Gamepass? (Yes/Y/No/N)",
             min_length=1,
             max_length=3,
             required=True
         ))
-        self.add_item(discord.ui.InputText(
+        self.add_item(discord.ui.TextInput(
             label="How will you participate?",
             placeholder="E.g., events, moderation, helping others.",
             min_length=3,
@@ -959,35 +959,38 @@ class Enlist_Modal(discord.ui.Modal):
 class Enlist_Manual_Modal(discord.ui.Modal):
     def __init__(self):
         super().__init__(title="Enlistment Form")
-        self.add_item(discord.ui.InputText(
+class Enlist_Manual_Modal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="Enlistment Form")
+        self.add_item(discord.ui.TextInput(
             label="Roblox Username",
             placeholder="Enter your Roblox username.",
             min_length=3,
             max_length=20,
             required=True
         ))
-        self.add_item(discord.ui.InputText(
+        self.add_item(discord.ui.TextInput(
             label="Roblox Profile/UserId",
             placeholder="Profile link or UserId (one is enough)",
             min_length=3,
             max_length=100,
             required=True
         ))
-        self.add_item(discord.ui.InputText(
+        self.add_item(discord.ui.TextInput(
             label="Why do you want to join?",
             placeholder="Why do you want to join Site 64 Insurgents? What interests you?",
             min_length=10,
             max_length=500,
             required=True
         ))
-        self.add_item(discord.ui.InputText(
+        self.add_item(discord.ui.TextInput(
             label="CI Gamepass",
             placeholder="Do you have the CI Gamepass? (Yes/Y/No/N)",
             min_length=1,
             max_length=3,
             required=True
         ))
-        self.add_item(discord.ui.InputText(
+        self.add_item(discord.ui.TextInput(
             label="How will you participate?",
             placeholder="E.g., events, moderation, helping others.",
             min_length=3,
@@ -1017,9 +1020,6 @@ class Enlist_Manual_Modal(discord.ui.Modal):
         await interaction.response.send_message(
             f"Your Manual Enlistment has been submitted!\n{channel.mention}", ephemeral=True
         )
-
-class Enlist_View(discord.ui.View):
-    def __init__(self):
         super().__init__(timeout=None)
 
     @discord.ui.button(label="📨 Enlist", style=discord.ButtonStyle.green, custom_id="enlist_button")
