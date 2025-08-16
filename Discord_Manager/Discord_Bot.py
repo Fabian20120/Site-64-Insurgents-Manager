@@ -916,7 +916,7 @@ class Enlist_Modal(discord.ui.Modal):
         super().__init__(title="Enlistment Form")
         self.add_item(discord.ui.InputText(
             label="Why do you want to join?",
-            placeholder="Tell us why you want to join Site 64 Insurgents. What interests you about our group, and what do you hope to contribute or gain?",
+            placeholder="Why do you want to join Site 64 Insurgents? What interests you?",
             min_length=10,
             max_length=500,
             required=True
@@ -969,14 +969,14 @@ class Enlist_Manual_Modal(discord.ui.Modal):
         ))
         self.add_item(discord.ui.InputText(
             label="Roblox Profile/UserId",
-            placeholder="Enter your Roblox Profile(link)/UserId. (Only one required, link is easier for us.)",
+            placeholder="Profile link or UserId (one is enough)",
             min_length=3,
             max_length=100,
             required=True
         ))
         self.add_item(discord.ui.InputText(
             label="Why do you want to join?",
-            placeholder="Tell us why you want to join Site 64 Insurgents. What interests you about our group, and what do you hope to contribute or gain?",
+            placeholder="Why do you want to join Site 64 Insurgents? What interests you?",
             min_length=10,
             max_length=500,
             required=True
