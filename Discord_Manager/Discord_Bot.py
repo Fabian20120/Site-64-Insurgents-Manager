@@ -73,8 +73,8 @@ async def RoleInformation(ctx: discord.ApplicationContext):
     embed.add_field(
         name="🔱 __DELTA CLASS__\nHighest Authority",
         value=(
-            "• **The Leader**\n"
-            "• **The Commandant**\n"
+            "• **The Engine**\n"
+            "• **The Engineer**\n"
             "• **Overseers** – 400 points + personally appointed\n"
             "• **Head Commandant** – 500 points + personally appointed"
         ),
@@ -777,10 +777,9 @@ def load_status():
     if os.path.exists(STATUS_FILE):
         with open(STATUS_FILE, "r") as f:
             data = json.load(f)
-            return data.get("status", 1)  # Default: 1 (Online)
-    return 1
+            return data.get("description", "No description available"),  data.get("status", 1)  # Default: 1 (Online)
 
-status = load_status()
+detailed_status, status = load_status()
 
 def save_status(status_value: int):
     with open(STATUS_FILE, "w") as f:
@@ -797,6 +796,11 @@ async def change_status(
             discord.OptionChoice(name="Controlled Instability", value=2),
             discord.OptionChoice(name="Lockdown Mode", value=3)
         ]
+    ), # type: ignore
+    description: discord.Option(
+        str,
+        "Description of the new status, if not provided defaults to 'No description available'",
+        required=False
     ) # type: ignore
 ):
     global status
@@ -891,7 +895,7 @@ async def convert_to_cet(
     )
     embed.set_footer(text="Includes daylight saving time (if active)")
     await ctx.respond(embed=embed)
-    
+
 import platform
 
 if platform.system() == "Windows":
