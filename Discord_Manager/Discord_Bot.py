@@ -1035,7 +1035,7 @@ class Enlist_View(discord.ui.View):
 @bot.slash_command(name="create_enlist_gui", description="Create the Enlist Gui")
 async def create_enlist_gui(ctx: discord.ApplicationContext):
     await ctx.defer()
-    await ctx.channel.send(view=Enlist_View())
+    await ctx.channel.send(embed=Enlist_Embed(), view=Enlist_View())
     await ctx.respond("Done", ephemeral=True)
 
 import platform
