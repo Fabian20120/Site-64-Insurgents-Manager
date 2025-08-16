@@ -54,6 +54,7 @@ async def on_member_join(member: discord.Member):
 async def on_ready():
     if not hasattr(bot, "persistent_views_added") or not bot.persistent_views_added:
         bot.add_view(WelcomeView())  # registriere persistent view fürs UI (Buttons)
+        bot.add_view(Enlist_View())  # registriere persistent Enlist-View
         bot.persistent_views_added = True
     print(f'Logged in as {bot.user.name} - {bot.user.id}')
     print("Bot is ready!")
@@ -895,6 +896,147 @@ async def convert_to_cet(
     )
     embed.set_footer(text="Includes daylight saving time (if active)")
     await ctx.respond(embed=embed)
+    
+class Enlist_Embed(discord.Embed):
+    def __init__(self):
+        embed = discord.Embed(
+            title="📜 Enlist Here",
+            description=("Welcome to **Site 64 Insurgents**!\n\n"
+                         "To join, please click the button below and complete the enlistment form.\n"
+                         "If you are not able to verify your Roblox account, via Bloxlink, please click Manual Enlistment.\n"
+                         "After you complete the form, a member will review your application as soon as possible."
+                        )
+        )
+        embed.set_footer(text="You may be asked for additional information, never share personal information or sensitive data.")
+        embed.color = discord.Color.from_rgb(255, 0, 0)
+
+class Enlist_Modal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="Enlistment Form")
+        self.add_item(discord.ui.InputText(
+            label="Why do you want to join?",
+            placeholder="Tell us why you want to join Site 64 Insurgents. What interests you about our group, and what do you hope to contribute or gain?",
+            min_length=10,
+            max_length=500,
+            required=True
+        ))
+        self.add_item(discord.ui.InputText(
+            label="CI Gamepass",
+            placeholder="Do you have the CI Gamepass? (Yes/Y/No/N)",
+            min_length=1,
+            max_length=3,
+            required=True
+        ))
+        self.add_item(discord.ui.InputText(
+            label="How will you participate?",
+            placeholder="E.g., events, moderation, helping others.",
+            min_length=3,
+            max_length=150,
+            required=True
+        ))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        guild = interaction.guild
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            interaction.user: discord.PermissionOverwrite(view_channel=True, send_messages=True)
+        }
+        channel = await guild.create_text_channel(
+            name=f"enlist-{interaction.user.name}",
+            overwrites=overwrites,
+            reason="New enlistment submitted"
+        )
+        await channel.send(
+            f"{interaction.user.mention} has submitted their enlistment.\n"
+            f"**Why do you want to join Site 64 Insurgents?**\n```{self.children[0].value}```\n"
+            f"**CI Gamepass:** `{self.children[1].value}`\n"
+            f"**How will you participate?**\n```{self.children[2].value}```"
+        )
+        await interaction.response.send_message(
+            f"Your Enlistment has been submitted!\n{channel.mention}", ephemeral=True
+        )
+
+class Enlist_Manual_Modal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="Enlistment Form")
+        self.add_item(discord.ui.InputText(
+            label="Roblox Username",
+            placeholder="Enter your Roblox username.",
+            min_length=3,
+            max_length=20,
+            required=True
+        ))
+        self.add_item(discord.ui.InputText(
+            label="Roblox Profile/UserId",
+            placeholder="Enter your Roblox Profile(link)/UserId. (Only one required, link is easier for us.)",
+            min_length=3,
+            max_length=100,
+            required=True
+        ))
+        self.add_item(discord.ui.InputText(
+            label="Why do you want to join?",
+            placeholder="Tell us why you want to join Site 64 Insurgents. What interests you about our group, and what do you hope to contribute or gain?",
+            min_length=10,
+            max_length=500,
+            required=True
+        ))
+        self.add_item(discord.ui.InputText(
+            label="CI Gamepass",
+            placeholder="Do you have the CI Gamepass? (Yes/Y/No/N)",
+            min_length=1,
+            max_length=3,
+            required=True
+        ))
+        self.add_item(discord.ui.InputText(
+            label="How will you participate?",
+            placeholder="E.g., events, moderation, helping others.",
+            min_length=3,
+            max_length=150,
+            required=True
+        ))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        guild = interaction.guild
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            interaction.user: discord.PermissionOverwrite(view_channel=True, send_messages=True)
+        }
+        channel = await guild.create_text_channel(
+            name=f"manual-enlist-{interaction.user.name}",
+            overwrites=overwrites,
+            reason="Manual enlistment submitted"
+        )
+        await channel.send(
+            f"{interaction.user.mention} has submitted a manual enlistment.\n"
+            f"**Roblox Username:** `{self.children[0].value}`\n"
+            f"**Roblox Profile/UserId:** `{self.children[1].value}`\n"
+            f"**Why do you want to join Site 64 Insurgents?**\n```{self.children[2].value}```\n"
+            f"**CI Gamepass:** `{self.children[3].value}`\n"
+            f"**How will you participate?**\n```{self.children[4].value}```"
+        )
+        await interaction.response.send_message(
+            f"Your Manual Enlistment has been submitted!\n{channel.mention}", ephemeral=True
+        )
+
+class Enlist_View(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="📨 Enlist", style=discord.ButtonStyle.green)
+    async def enlist_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Please fill out the enlistment form.", ephemeral=True)
+        await interaction.response.send_modal(Enlist_Modal())
+
+    @discord.ui.button(label="✉️ Manual Enlistment", style=discord.ButtonStyle.blurple)
+    async def manual_enlistment_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Please fill out the manual enlistment form.", ephemeral=True)
+        await interaction.response.send_modal(Enlist_Manual_Modal())
+        
+@bot.slash_command(name="create_enlist_gui", description="Create the Enlist Gui")
+async def create_enlist_gui(ctx: discord.ApplicationContext):
+    await ctx.defer()
+    await ctx.channel.send(view=Enlist_View())
+    await ctx.respond("Done", ephemeral=True)
 
 import platform
 
