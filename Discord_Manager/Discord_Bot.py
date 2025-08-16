@@ -1024,12 +1024,10 @@ class Enlist_View(discord.ui.View):
 
     @discord.ui.button(label="📨 Enlist", style=discord.ButtonStyle.green, custom_id="enlist_button")
     async def enlist_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Please fill out the enlistment form.", ephemeral=True)
         await interaction.response.send_modal(Enlist_Modal())
 
     @discord.ui.button(label="✉️ Manual Enlistment", style=discord.ButtonStyle.blurple, custom_id="manual_enlistment_button")
     async def manual_enlistment_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Please fill out the manual enlistment form.", ephemeral=True)
         await interaction.response.send_modal(Enlist_Manual_Modal())
         
 @bot.slash_command(name="create_enlist_gui", description="Create the Enlist Gui")
