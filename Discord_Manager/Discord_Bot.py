@@ -899,16 +899,17 @@ async def convert_to_cet(
     
 class Enlist_Embed(discord.Embed):
     def __init__(self):
-        embed = discord.Embed(
+        super().__init__(
             title="📜 Enlist Here",
-            description=("Welcome to **Site 64 Insurgents**!\n\n"
-                         "To join, please click the button below and complete the enlistment form.\n"
-                         "If you are not able to verify your Roblox account, via Bloxlink, please click Manual Enlistment.\n"
-                         "After you complete the form, a member will review your application as soon as possible."
-                        )
+            description=(
+                "Welcome to **Site 64 Insurgents**!\n\n"
+                "To join, please click the button below and complete the enlistment form.\n"
+                "If you are not able to verify your Roblox account, via Bloxlink, please click Manual Enlistment.\n"
+                "After you complete the form, a member will review your application as soon as possible."
+            ),
+            color=discord.Color.from_rgb(255, 0, 0)
         )
-        embed.set_footer(text="You may be asked for additional information, never share personal information or sensitive data.")
-        embed.color = discord.Color.from_rgb(255, 0, 0)
+        self.set_footer(text="You may be asked for additional information, never share personal information or sensitive data.")
 
 class Enlist_Modal(discord.ui.Modal):
     def __init__(self):
