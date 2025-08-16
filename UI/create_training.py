@@ -74,7 +74,7 @@ class SendTrainingButton(discord.ui.Button):
 
 class TrainingTypeView(discord.ui.View):
     def __init__(self, author, ctx, co_host, day, hr, minute, users_needed):
-        super().__init__(timeout=60)
+        super().__init__(timeout=None)
         self.selected_types = []
         self.author = author
         self.ctx = ctx
