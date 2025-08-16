@@ -49,7 +49,6 @@ async def on_member_join(member: discord.Member):
     view = WelcomeView()
     await welcome_channel.send(embed=embed, view=view)
 
-
 @bot.event
 async def on_ready():
     if not hasattr(bot, "persistent_views_added") or not bot.persistent_views_added:
@@ -1021,7 +1020,7 @@ class Enlist_Manual_Modal(discord.ui.Modal):
 
 class Enlist_View(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)
+        super().__init__()
 
     @discord.ui.button(label="📨 Enlist", style=discord.ButtonStyle.green)
     async def enlist_button(self, button: discord.ui.Button, interaction: discord.Interaction):
