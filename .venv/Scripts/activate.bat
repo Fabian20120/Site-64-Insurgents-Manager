@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=c:\Users\User\Documents\GitHub\Site-64-Insurgents-Manager\.venv
+set VIRTUAL_ENV=c:\Users\User\Desktop\Site 64 Insurgents\Site-64-Insurgents-Manager\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 
@@ -32,6 +32,3 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" %_OLD_CODEPAGE% > nul
     set _OLD_CODEPAGE=
 )
-
-rem
-for %%i in ("%~dp0\..\..") do set PYTHONPATH=%%~fi

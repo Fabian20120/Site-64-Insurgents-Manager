@@ -14,6 +14,9 @@ import pycountry
 import datetime
 import time
 import asyncio
+import psutil
+import platform
+import socket
 
 status = 2
 
@@ -959,9 +962,6 @@ class Enlist_Modal(discord.ui.Modal):
 class Enlist_Manual_Modal(discord.ui.Modal):
     def __init__(self):
         super().__init__(title="Enlistment Form")
-class Enlist_Manual_Modal(discord.ui.Modal):
-    def __init__(self):
-        super().__init__(title="Enlistment Form")
         self.add_item(discord.ui.TextInput(
             label="Roblox Username",
             placeholder="Enter your Roblox username.",
@@ -1035,6 +1035,92 @@ async def create_enlist_gui(ctx: discord.ApplicationContext):
     await ctx.defer()
     await ctx.channel.send(embed=Enlist_Embed(), view=Enlist_View())
     await ctx.respond("Done", ephemeral=True)
+
+@bot.slash_command(name="system_stats", description="Show live system statistics as an embed")
+async def system_stats(ctx):
+    uname = platform.uname()
+    boot_time = datetime.datetime.fromtimestamp(psutil.boot_time())
+    uptime = datetime.datetime.now() - boot_time
+    cpu_percent = psutil.cpu_percent(interval=0.5)
+    cpu_count = psutil.cpu_count(logical=False)
+    cpu_count_logical = psutil.cpu_count(logical=True)
+    cpu_usages = psutil.cpu_percent(percpu=True)
+    load_avg = psutil.getloadavg() if hasattr(psutil, "getloadavg") else (0,0,0)
+    mem = psutil.virtual_memory()
+    swap = psutil.swap_memory()
+    disk = psutil.disk_usage("/")
+    disk_io = psutil.disk_io_counters()
+    net_io = psutil.net_io_counters()
+    host = socket.gethostname()
+    py_ver = platform.python_version()
+    py_comp = platform.python_compiler()
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    # English table with emojis
+    system_table = (
+        "| Category         | Value |\n"
+        "|------------------|-------|\n"
+        f"| 🧩 Platform        | {uname.system} |\n"
+        f"| 📦 Release         | {uname.release} |\n"
+        f"| 📜 Version         | {uname.version} |\n"
+        f"| 🏗️ Architecture    | {uname.machine} |\n"
+        f"| ⏰ Boot Time       | {boot_time.strftime('%Y-%m-%d %H:%M:%S')} |\n"
+        f"| ⏳ Uptime          | {str(uptime).split('.')[0]} |\n"
+        f"| 💻 Hostname        | {host} |\n"
+        f"| 🐍 Python Version  | {py_ver} |\n"
+        f"| ⚙️ Python Compiler | {py_comp} |\n"
+    )
+    cpu_table = (
+        "| Category         | Value |\n"
+        "|------------------|-------|\n"
+        f"| ⚙️ Physical Cores  | {cpu_count} |\n"
+        f"| 🔢 Logical Cores   | {cpu_count_logical} |\n"
+        f"| 📊 CPU Usage (%)   | {cpu_percent} |\n"
+        f"| 📈 Load Average    | {load_avg} |\n"
+        f"| 🧮 Cores Usage     | {'; '.join([f'🟢 Core {i}: {usage}%' for i, usage in enumerate(cpu_usages)])} |\n"
+    )
+    mem_table = (
+        "| Category         | Value |\n"
+        "|------------------|-------|\n"
+        f"| 🗄️ Total           | {mem.total/1024**3:.2f} GB |\n"
+        f"| 🟢 Available       | {mem.available/1024**3:.2f} GB |\n"
+        f"| 🔴 Used            | {mem.used/1024**3:.2f} GB |\n"
+        f"| 🟡 Free            | {mem.free/1024**3:.2f} GB |\n"
+        f"| 📊 Percent Used    | {mem.percent}% |\n"
+        f"| 💾 Swap Total      | {swap.total/1024**2:.2f} MB |\n"
+        f"| 💾 Swap Used       | {swap.used/1024**2:.2f} MB |\n"
+        f"| 💾 Swap Free       | {swap.free/1024**2:.2f} MB |\n"
+        f"| 💾 Swap Percent    | {swap.percent}% |\n"
+    )
+    disk_table = (
+        "| Category         | Value |\n"
+        "|------------------|-------|\n"
+        f"| 💽 Total           | {disk.total/1024**3:.2f} GB |\n"
+        f"| 💽 Used            | {disk.used/1024**3:.2f} GB |\n"
+        f"| 💽 Free            | {disk.free/1024**3:.2f} GB |\n"
+        f"| 📊 Percent         | {disk.percent}% |\n"
+        f"| 📖 Reads           | {disk_io.read_count} |\n"
+        f"| ✍️ Writes          | {disk_io.write_count} |\n"
+        f"| 📖 Read Bytes      | {disk_io.read_bytes/1024**2:.2f} MB |\n"
+        f"| ✍️ Write Bytes     | {disk_io.write_bytes/1024**2:.2f} MB |\n"
+    )
+    net_table = (
+        "| Category         | Value |\n"
+        "|------------------|-------|\n"
+        f"| 📤 Bytes Sent      | {net_io.bytes_sent/1024**2:.2f} MB |\n"
+        f"| 📥 Bytes Received  | {net_io.bytes_recv/1024**2:.2f} MB |\n"
+        f"| 📦 Packets Sent    | {net_io.packets_sent} |\n"
+        f"| 📦 Packets Received| {net_io.packets_recv} |\n"
+    )
+
+    embed = discord.Embed(title="📊 Live System Stats", color=discord.Color.blue())
+    embed.add_field(name="🖥️ System", value=f"```\n{system_table}```", inline=False)
+    embed.add_field(name="🧠 CPU", value=f"```\n{cpu_table}```", inline=False)
+    embed.add_field(name="🗄️ Memory", value=f"```\n{mem_table}```", inline=False)
+    embed.add_field(name="💽 Disk", value=f"```\n{disk_table}```", inline=False)
+    embed.add_field(name="🌐 Network", value=f"```\n{net_table}```", inline=False)
+    embed.set_footer(text=f"Updated {now}")
+    await ctx.respond(embed=embed)
 
 import platform
 
