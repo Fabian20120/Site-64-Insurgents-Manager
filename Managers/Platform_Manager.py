@@ -4,19 +4,13 @@ import datetime
 from pathlib import Path
 import sys
 import psutil
+import datetime
 
 def Get_Full_Path(path):
     return (Path(__file__).parent / path).resolve()
 
 def Get_Platform():
     return platform.system()
-
-import datetime
-import platform
-import psutil
-import GPUtil
-import sys
-import discord
 
 def format_bytes(size):
     # Bytes in lesbare Größen umwandeln
@@ -35,21 +29,6 @@ def get_stats():
     disk_io = psutil.disk_io_counters()
     swap = psutil.swap_memory()
     virtual_mem = psutil.virtual_memory()
-
-    try:
-        gpus = GPUtil.getGPUs()
-        gpu_data = {
-            f"GPU {i}": {
-                "Name": gpu.name,
-                "Load (%)": round(gpu.load * 100, 1),
-                "Memory Used": gpu.memoryUsed,
-                "Memory Free": gpu.memoryFree,
-                "Memory Total": gpu.memoryTotal,
-                "Temperature (°C)": gpu.temperature
-            } for i, gpu in enumerate(gpus)
-        }
-    except Exception as e:
-        gpu_data = {"Error": str(e)}
 
     return {
         "🖥️ System": {
@@ -70,7 +49,6 @@ def get_stats():
             "🧮 Cores Usage (%)": {f"Core {i}": usage for i, usage in enumerate(cpu_percent_per_core)},
             "📈 Load Average": psutil.getloadavg(),
         },
-        "🎮 GPU": gpu_data,
         "🗄️ Memory": {
             "Total": virtual_mem.total,
             "Available": virtual_mem.available,
