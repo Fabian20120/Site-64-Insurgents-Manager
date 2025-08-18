@@ -1,6 +1,4 @@
-.venv
-__pycache__
-transcripts
-__pycache__/roles.cpython-311.pyc
+.venv/
+__pycache__/
+transcripts/
 home/fabian/secrets.json
-__pycache__/roles.cpython-311.pyc
