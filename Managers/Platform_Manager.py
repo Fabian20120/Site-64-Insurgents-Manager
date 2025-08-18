@@ -118,18 +118,6 @@ def create_embed():
                 f"**Packets Sent:** {values['Packets Sent']}\n"
                 f"**Packets Received:** {values['Packets Received']}\n"
             )
-        elif section == "🎮 GPU":
-            if "Error" in values:
-                formatted += f"Error fetching GPU data: {values['Error']}\n"
-            else:
-                for gpu, gpu_stats in values.items():
-                    formatted += f"**{gpu}**\n"
-                    formatted += f"- Name: {gpu_stats['Name']}\n"
-                    formatted += f"- Load: {gpu_stats['Load (%)']}%\n"
-                    formatted += f"- Memory Used: {format_bytes(gpu_stats['Memory Used'])}\n"
-                    formatted += f"- Memory Free: {format_bytes(gpu_stats['Memory Free'])}\n"
-                    formatted += f"- Memory Total: {format_bytes(gpu_stats['Memory Total'])}\n"
-                    formatted += f"- Temperature: {gpu_stats['Temperature (°C)']}°C\n\n"
         else:
             # Für alle anderen Sektionen allgemeine Ausgabe
             for key, value in values.items():

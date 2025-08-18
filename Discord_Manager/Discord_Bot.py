@@ -6,7 +6,7 @@ from Backend.Embeds_UIs import WelcomeEmbed, WelcomeView
 import Backend
 import pytz
 from Backend.Embeds_UIs.CreateAnnouncmentView import AnnouncementStep1
-from Managers.Platform_Manager import create_embed, get_stats
+from Managers.Platform_Manager import create_embed as create_system_stats, get_stats
 from UI import send_rules, CreateTicket, TrainingTypeView
 from roles import UserRoles
 import json
@@ -587,12 +587,12 @@ async def slash_pts_balance(ctx: discord.ApplicationContext):
     
 @bot.slash_command(name="monitor", description="Live system monitor", dm_permission=True)
 async def monitor(ctx):
-    msg = await ctx.send(embed=create_embed(status))
+    msg = await ctx.send(embed=create_embed())
 
     try:
         while True:
             await asyncio.sleep(2)
-            new_embed = create_embed(status)
+            new_embed = create_embed()
             await msg.edit(embed=new_embed)
     except asyncio.CancelledError:
         pass  # z. B. bei manuellem Stop oder Bot-Neustart
@@ -1029,20 +1029,27 @@ class Enlist_Manual_Modal(discord.ui.Modal):
     @discord.ui.button(label="✉️ Manual Enlistment", style=discord.ButtonStyle.blurple, custom_id="manual_enlistment_button")
     async def manual_enlistment_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.send_modal(Enlist_Manual_Modal())
-        
+
+class EnlistButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="📨 Enlist", style=discord.ButtonStyle.green, custom_id="enlist_button")
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(Enlist_Modal())
+
+class ManualEnlistmentButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="✉️ Manual Enlistment", style=discord.ButtonStyle.blurple, custom_id="manual_enlistment_button")
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Please fill out the manual enlistment form.", ephemeral=True)
+        await interaction.response.send_modal(Enlist_Manual_Modal())
+
 class Enlist_View(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-
-    @discord.ui.button(label="📨 Enlist", style=discord.ButtonStyle.green)
-    async def enlist_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Please fill out the enlistment form.", ephemeral=True)
-        await interaction.response.send_modal(Enlist_Modal())
-
-    @discord.ui.button(label="✉️ Manual Enlistment", style=discord.ButtonStyle.blurple)
-    async def manual_enlistment_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Please fill out the manual enlistment form.", ephemeral=True)
-        await interaction.response.send_modal(Enlist_Manual_Modal())
+        self.add_item(EnlistButton())
+        self.add_item(ManualEnlistmentButton())
         
 @bot.slash_command(name="create_enlist_gui", description="Create the Enlist Gui")
 async def create_enlist_gui(ctx: discord.ApplicationContext):
@@ -1059,7 +1066,7 @@ async def system_stats(ctx):
     cpu_count = psutil.cpu_count(logical=False)
     cpu_count_logical = psutil.cpu_count(logical=True)
     cpu_usages = psutil.cpu_percent(percpu=True)
-    cores_usage = '\n'.join([f"→ 🟢 Core {i}: {usage}%" for i, usage in enumerate(cpu_usages)])
+    cores_usage = '\n'.join([f"**•**    Core {i}: {usage}%" for i, usage in enumerate(cpu_usages)])
     load_avg = psutil.getloadavg() if hasattr(psutil, "getloadavg") else (0,0,0)
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
@@ -1073,54 +1080,55 @@ async def system_stats(ctx):
 
     description = (
         f"🖥️ **System**\n"
-        f"• 🧩 Platform: {uname.system}\n"
-        f"• 📦 Release: {uname.release}\n"
-        f"• 📜 Version: {uname.version}\n"
-        f"• 🏗️ Architecture: {uname.machine}\n"
-        f"• ⏰ Boot Time: {boot_time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        f"• ⏳ Uptime: {str(uptime).split('.')[0]}\n"
-        f"• 💻 Hostname: {host}\n"
-        f"• 🐍 Python Version: {py_ver}\n"
-        f"• ⚙️ Python Compiler: {py_comp}\n\n"
+        f"🧩 Platform: {uname.system}\n"
+        f"📦 Release: {uname.release}\n"
+        f"📜 Version: {uname.version}\n"
+        f"🏗️ Architecture: {uname.machine}\n"
+        f"⏰ Boot Time: {boot_time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        f"⏳ Uptime: {str(uptime).split('.')[0]}\n"
+        f"💻 Hostname: {host}\n"
+        f"🐍 Python Version: {py_ver}\n"
+        f"⚙️ Python Compiler: {py_comp}\n\n"
 
         f"🧠 **CPU**\n"
-        f"• ⚙️ Physical Cores: {cpu_count}\n"
-        f"• 🔢 Logical Cores: {cpu_count_logical}\n"
-        f"• 📊 CPU Usage (%): {cpu_percent}\n"
-        f"• 📈 Load Average: {load_avg}\n"
-        f"• 🧮 Cores Usage:\n"
+        f"Physical Cores: {cpu_count}\n"
+        f"Logical Cores: {cpu_count_logical}\n"
+        f"CPU Usage (%): {cpu_percent}\n"
+        f"Load Average: {load_avg}\n"
+        f"Cores Usage:\n"
         f"{cores_usage}\n\n"
 
         f"🗄️ **Memory**\n"
-        f"• 🗄️ Total: {mem.total/1024**3:.2f} GB\n"
-        f"• 🟢 Available: {mem.available/1024**3:.2f} GB\n"
-        f"• 🔴 Used: {mem.used/1024**3:.2f} GB\n"
-        f"• 🟡 Free: {mem.free/1024**3:.2f} GB\n"
-        f"• 📊 Percent Used: {mem.percent}%\n"
-        f"• 💾 Swap Total: {swap.total/1024**2:.2f} MB\n"
-        f"• 💾 Swap Used: {swap.used/1024**2:.2f} MB\n"
-        f"• 💾 Swap Free: {swap.free/1024**2:.2f} MB\n"
-        f"• 💾 Swap Percent: {swap.percent}%\n\n"
+        f"Total: {mem.total/1024**3:.2f} GB\n"
+        f"Available: {mem.available/1024**3:.2f} GB\n"
+        f"Used: {mem.used/1024**3:.2f} GB\n"
+        f"Free: {mem.free/1024**3:.2f} GB\n"
+        f"Percent Used: {mem.percent}%\n"
+        f"Swap Total: {swap.total/1024**2:.2f} MB\n"
+        f"Swap Used: {swap.used/1024**2:.2f} MB\n"
+        f"Swap Free: {swap.free/1024**2:.2f} MB\n"
+        f"Swap Percent: {swap.percent}%\n\n"
 
         f"💽 **Disk**\n"
-        f"• 💽 Total: {disk.total/1024**3:.2f} GB\n"
-        f"• 💽 Used: {disk.used/1024**3:.2f} GB\n"
-        f"• 💽 Free: {disk.free/1024**3:.2f} GB\n"
-        f"• 📊 Percent: {disk.percent}%\n"
-        f"• 📖 Reads: {disk_io.read_count}\n"
-        f"• ✍️ Writes: {disk_io.write_count}\n"
-        f"• 📖 Read Bytes: {disk_io.read_bytes/1024**2:.2f} MB\n"
-        f"• ✍️ Write Bytes: {disk_io.write_bytes/1024**2:.2f} MB\n\n"
+        f"Total: {disk.total/1024**3:.2f} GB\n"
+        f"Used: {disk.used/1024**3:.2f} GB\n"
+        f"Free: {disk.free/1024**3:.2f} GB\n"
+        f"Percent: {disk.percent}%\n"
+        f"Reads: {disk_io.read_count}\n"
+        f"Writes: {disk_io.write_count}\n"
+        f"Read Bytes: {disk_io.read_bytes/1024**2:.2f} MB\n"
+        f"Write Bytes: {disk_io.write_bytes/1024**2:.2f} MB\n\n"
 
         f"🌐 **Network**\n"
-        f"• 📤 Bytes Sent: {net_io.bytes_sent/1024**2:.2f} MB\n"
-        f"• 📥 Bytes Received: {net_io.bytes_recv/1024**2:.2f} MB\n"
-        f"• 📦 Packets Sent: {net_io.packets_sent}\n"
-        f"• 📦 Packets Received: {net_io.packets_recv}\n"
+        f"Bytes Sent: {net_io.bytes_sent/1024**2:.2f} MB\n"
+        f"Bytes Received: {net_io.bytes_recv/1024**2:.2f} MB\n"
+        f"Packets Sent: {net_io.packets_sent}\n"
+        f"Packets Received: {net_io.packets_recv}\n"
     )
 
     embed = discord.Embed(title="📊 Live System Stats", description=description, color=discord.Color.blue())
     embed.set_footer(text=f"Updated {now}")
+    embed = create_system_stats()
     await ctx.respond(embed=embed)
 
 import platform
