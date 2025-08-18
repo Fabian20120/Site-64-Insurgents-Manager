@@ -1045,6 +1045,7 @@ async def system_stats(ctx):
     cpu_count = psutil.cpu_count(logical=False)
     cpu_count_logical = psutil.cpu_count(logical=True)
     cpu_usages = psutil.cpu_percent(percpu=True)
+    cores_usage = '\n'.join([f"→ 🟢 Core {i}: {usage}%" for i, usage in enumerate(cpu_usages)])
     load_avg = psutil.getloadavg() if hasattr(psutil, "getloadavg") else (0,0,0)
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
@@ -1073,7 +1074,8 @@ async def system_stats(ctx):
         f"• 🔢 Logical Cores: {cpu_count_logical}\n"
         f"• 📊 CPU Usage (%): {cpu_percent}\n"
         f"• 📈 Load Average: {load_avg}\n"
-        f"• 🧮 Cores Usage: \n{'\n'.join([f'→ 🟢 Core {i}: {usage}%' for i, usage in enumerate(cpu_usages)])}\n\n"
+        f"• 🧮 Cores Usage:\n"
+        f"{cores_usage}\n\n"
 
         f"🗄️ **Memory**\n"
         f"• 🗄️ Total: {mem.total/1024**3:.2f} GB\n"
