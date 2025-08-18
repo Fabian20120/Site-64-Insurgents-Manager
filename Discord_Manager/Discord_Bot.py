@@ -1055,7 +1055,6 @@ async def system_stats(ctx):
     py_ver = platform.python_version()
     py_comp = platform.python_compiler()
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    space = " "  # U+2003 EM SPACE or "⠀" U+2800 Braille Blank
 
     description = (
         f"🖥️ **System**\n"

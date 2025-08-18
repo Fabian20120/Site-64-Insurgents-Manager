@@ -244,7 +244,7 @@ if (Test-Path -Path Env:PYTHONHOME) {
 
 # Add the venv to the PATH
 Copy-Item -Path Env:PATH -Destination Env:_OLD_VIRTUAL_PATH
-$Env:PATH = "$VenvExecDir$([System.IO.Path]::PathSeparator)$Env:PATH"
+$Env:PATH = "$VenvExecDir$([System.IO.Path]::PathSeparator)$VenvDir$([System.IO.Path]::PathSeparator)$Env:PATH"
 
 # SIG # Begin signature block
 # MIIvIwYJKoZIhvcNAQcCoIIvFDCCLxACAQExDzANBglghkgBZQMEAgEFADB5Bgor
