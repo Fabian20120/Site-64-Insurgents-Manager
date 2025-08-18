@@ -1,4 +1,4 @@
-.venv/
+.venv
 __pycache__
 transcripts
 __pycache__/roles.cpython-311.pyc
