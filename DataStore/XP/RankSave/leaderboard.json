@@ -1,0 +1,52 @@
+{
+    "919280252319039558": {
+        "xp": 99,
+        "total_xp": 29499,
+        "chatting_xp": 0,
+        "reaction_xp": 0,
+        "xp_needed": 2475,
+        "level": 25,
+        "rank": 1,
+        "user_id": "919280252319039558"
+    },
+    "1270418484769067099": {
+        "xp": 933,
+        "xp_needed": 1675,
+        "level": 17,
+        "rank": 2,
+        "user_id": "1270418484769067099",
+        "total_xp": 14133,
+        "chatting_xp": 0,
+        "reaction_xp": 0
+    },
+    "781664161872609292": {
+        "xp": 0,
+        "xp_needed": 475,
+        "level": 5,
+        "rank": 3,
+        "user_id": "781664161872609292",
+        "total_xp": 900,
+        "chatting_xp": 0,
+        "reaction_xp": 0
+    },
+    "893117495341355119": {
+        "xp": 170,
+        "total_xp": 245,
+        "chatting_xp": 0,
+        "reaction_xp": 0,
+        "xp_needed": 175,
+        "level": 2,
+        "rank": 4,
+        "user_id": "893117495341355119"
+    },
+    "1085666700676055141": {
+        "xp": 29,
+        "total_xp": 104,
+        "chatting_xp": 0,
+        "reaction_xp": 0,
+        "xp_needed": 175,
+        "level": 2,
+        "rank": 5,
+        "user_id": "1085666700676055141"
+    }
+}

@@ -1,0 +1,190 @@
+html, body {
+    font-family: 'Roboto', Arial, sans-serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-image: url('../Backgrounds/Wallpaper48.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;  /* Verhindert Scrollprobleme mit dem Hintergrund */
+    color: #fff;
+    overflow-x: hidden; /* Verhindere horizontales Scrollen */
+}
+header {
+    padding: 0.5rem 0;
+    margin: 15px;
+    border-radius: 24px; /* Konsistent mit dem neuen Radius */
+    overflow: hidden; /* Wichtig, um den Inhalt innerhalb der Rundungen zu halten */
+}
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1920px;
+    margin: 0 auto;
+    padding: 0.5rem 2rem;
+    position: relative;
+    z-index: 1; /* Stelle sicher, dass der Inhalt über dem Canvas liegt */
+}
+nav h1 {
+    margin: 0;
+    text-align: left;
+}
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+}
+nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+.hero {
+    text-align: center;
+    padding: 4rem 1rem;
+    background: linear-gradient(-45deg, rgb(240, 0, 0) 0%, rgb(0, 0, 0) 50%);
+    border-radius: 12px;
+    margin: 2rem auto;
+    max-width: 600px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+.hero_glass {
+    text-align: center;
+    padding: 4rem 1rem;
+    /* Radikaler Ansatz - komplett neuer Glaseffekt ohne jegliche Linien */
+    background-color: rgba(17, 25, 40, 0.1); /* Dunklerer Hintergrund mit geringer Transparenz */
+    border-radius: 24px; /* Noch größerer Radius für maximale Weichheit */
+    margin: 2rem auto;
+    max-width: 600px;
+    backdrop-filter: blur(24px); /* Extrem starke Unschärfe */
+    -webkit-backdrop-filter: blur(24px); /* Für Safari */
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); /* Ein einziger, sanfter Schatten */
+    border: none;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    
+    /* Wichtig: WebKit-spezifische Eigenschaft, die Kanten und Ränder eliminiert */
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    
+    /* Entfernen aller potentiellen Renderartefakte */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    
+    /* Hardware-Beschleunigung aktivieren (reduziert Renderprobleme) */
+    will-change: transform;
+    
+    /* Vermeidet alle Artefakte durch Anti-Aliasing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Komplett alle Pseudo-Elemente entfernen */
+.hero_glass::before,
+.hero_glass::after {
+    display: none;
+}
+
+.hero_glass:hover {
+    transform: translateY(-2px);
+}
+.btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.75rem 2rem;
+    background: #23272a;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: background 0.2s;
+}
+.btn:hover {
+    background: #7289da;
+}
+footer {
+    text-align: center;
+    padding: 1rem;
+    background: #2c2f33;
+    margin-top: 2rem;
+    position: static;
+    position-area: relative;
+    border-radius: 0;
+}
+.glass {
+    /* Radikaler Ansatz - komplett neuer Glaseffekt ohne jegliche Linien */
+    background-color: rgba(17, 25, 40, 0.1); /* Dunklerer Hintergrund mit geringer Transparenz */
+    border-radius: 24px; /* Noch größerer Radius für maximale Weichheit */
+    backdrop-filter: blur(24px); /* Extrem starke Unschärfe */
+    -webkit-backdrop-filter: blur(24px); /* Für Safari */
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); /* Ein einziger, sanfter Schatten */
+    border: none;
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    
+    /* Wichtig: WebKit-spezifische Eigenschaft, die Kanten und Ränder eliminiert */
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    
+    /* Entfernen aller potentiellen Renderartefakte */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    
+    /* Hardware-Beschleunigung aktivieren (reduziert Renderprobleme) */
+    will-change: transform;
+    
+    /* Vermeidet alle Artefakte durch Anti-Aliasing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Komplett alle Pseudo-Elemente entfernen */
+.glass::before,
+.glass::after {
+    display: none;
+}
+
+.glass:hover {
+    transform: translateY(-0.1px);
+}
+
+/* Canvas-Element Transparenz */
+canvas#header-reflection, canvas#hero-reflection {
+    opacity: 1; /* 0.3 = subtiler, 0.7 = intensiver */
+}
+
+/* iOS 26 Liquid Glass Styles */
+.glass, .hero_glass {
+    background: rgba(20, 20, 25, 0.2); /* Leicht sichtbarer Hintergrund - wichtig für Glaseffekt */
+    backdrop-filter: blur(15px); /* Weniger Blur für iOS 26 Look */
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 20px;
+    box-shadow: 
+        0 4px 24px rgba(0, 0, 0, 0.15), /* Hauptschatten */
+        0 1px 0px rgba(255, 255, 255, 0.12) inset, /* Obere Glanzlinie */
+        0 -1px 0px rgba(0, 0, 0, 0.05) inset; /* Untere Schattenlinie */
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+    transform: translateZ(0); /* Hardware acceleration */
+    border: 1px solid rgba(255, 255, 255, 0.08); /* Sehr subtile Grenzlinie */
+}
+
+/* Canvas Styling für verbesserte Reflexionen */
+canvas#header-reflection, canvas#hero-reflection {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    border-radius: inherit;
+    opacity: 0.85; /* Höhere Opazität für sichtbare Reflexionen */
+    pointer-events: none;
+}
