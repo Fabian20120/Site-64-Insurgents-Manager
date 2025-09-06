@@ -238,7 +238,7 @@ class XP_Manager(commands.Cog):
         # Fortschrittsbalken direkt unter Profilbild
         bar_x, bar_y, bar_w, bar_h = 15*scale, 145*scale, 625*scale, 35*scale
         # Fortschrittsbalken zeichnen
-        draw.rounded_rectangle([bar_x, bar_y, bar_x+bar_w, bar_y+bar_h], radius=15*scale, fill=(255,255,255))
+        draw.rounded_rectangle([bar_x, bar_y, bar_x+bar_w, bar_y+bar_h], radius=15*scale, fill=(74,76,81))
 
         # Fortschritt berechnen
         progress = int((xp / xp_needed) * bar_w) if xp_needed > 0 else 0
